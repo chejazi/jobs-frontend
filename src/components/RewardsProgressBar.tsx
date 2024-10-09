@@ -1,0 +1,45 @@
+import { formatUnits } from 'viem';
+
+import { prettyPrint } from 'utils/formatting';
+
+interface RewardProgressBarProps {
+  rewardTotal: bigint;
+  decimals: number;
+  rewardSymbol: string;
+  startTime: number;
+  endTime: number;
+}
+
+function RewardProgressBar({
+  rewardTotal,
+  decimals,
+  rewardSymbol,
+  startTime,
+  endTime,
+}: RewardProgressBarProps) {
+  const now = Math.floor((new Date().getTime()) / 1000);
+  const duration = endTime - startTime;
+  const progress = Math.min((now - startTime), duration) / duration * 100;
+  const done = progress == 100;
+  const units = formatUnits(rewardTotal * BigInt(parseInt(Number(progress * 1000).toString())) / 100000n, decimals);
+
+  return (
+    <div>
+      <div style={{ fontSize: '.8em' }}>
+        <div>{prettyPrint(units, 0)} ${rewardSymbol} paid ({(progress).toFixed(0)}% complete)</div>
+        <div className="loading-bar">
+          <div className="loading-progress" style={{ width: `${progress}%`, minWidth: '1em' }} />
+        </div>
+        {
+          done ? (
+            <div>Ended {new Date(endTime * 1000).toLocaleString()}</div>
+          ) : (
+            <div>Active until {new Date(endTime * 1000).toLocaleString()}</div>
+          )
+        }
+      </div>
+    </div>
+  );
+}
+
+export default RewardProgressBar;
