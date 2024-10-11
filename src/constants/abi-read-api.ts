@@ -1,4 +1,4 @@
-export const readApiAddress = '0xC09da6E1160b23EDF13Edf9997952Fd37BCA3C12';
+export const readApiAddress = '0xAa8e6C563201773Ed08E1606E0900D468BCa530d';
 export const readApiAbi = [
   {
     "inputs": [

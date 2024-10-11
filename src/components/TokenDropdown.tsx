@@ -7,17 +7,24 @@ import { DropdownOptionLabel, TokenMap, Token } from '../types';
 import { readApiAbi, readApiAddress } from 'constants/abi-read-api';
 // import { erc20Abi } from 'constants/abi-erc20';
 
-const formatOptionLabel = ({ label, description, value }: DropdownOptionLabel) => (
-  <div className="flex" style={{ alignItems: 'center' }}>
-    <div className="flex-shrink" style={{ width: '24px', height: '24px', marginRight: '.5em' }}>
-      <img src={getTokenImage(value)} style={{ width: '24px', height: '24px', borderRadius: '500px' }} />
-    </div>
-    <div className="flex-grow">
-      <div style={{ fontWeight: 'bold' }}>{label}</div>
-      <div className="tvl" style={{ fontWeight: 'normal', fontSize: '.75em' }}>{description}</div>
-    </div>
-  </div>
-);
+const formatOptionLabel = ({ label, description, value }: DropdownOptionLabel) => {
+  try {
+    const image = getTokenImage(value);
+    return (
+      <div className="flex" style={{ alignItems: 'center' }}>
+        <div className="flex-shrink" style={{ width: '24px', height: '24px', marginRight: '.5em' }}>
+          <img src={image} style={{ width: '24px', height: '24px', borderRadius: '500px' }} />
+        </div>
+        <div className="flex-grow">
+          <div style={{ fontWeight: 'bold' }}>{label}</div>
+          <div className="tvl" style={{ fontWeight: 'normal', fontSize: '.75em' }}>{description}</div>
+        </div>
+      </div>
+    );
+  } catch (e) {
+    return null;
+  }
+};
 
 function TokenDropdown({ token, setToken }: { token: string | null, setToken: (t: string | null) => void}) {
   const tokenMap: TokenMap = {};

@@ -1,4 +1,4 @@
-export const jobBoardAddress = '0xbb69DBAC4aA4b886863b5B4278629FFbDb91Eb54';
+export const jobBoardAddress = '0xDC324998F1cbf814e5e4Fa29C60Be0778A1B702A';
 export const jobBoardAbi = [
   {
     "inputs": [
@@ -189,7 +189,7 @@ export const jobBoardAbi = [
         "type": "uint256"
       }
     ],
-    "name": "remove",
+    "name": "rescind",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -208,6 +208,19 @@ export const jobBoardAbi = [
       }
     ],
     "name": "transfer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "jobId",
+        "type": "uint256"
+      }
+    ],
+    "name": "unapply",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -236,7 +249,25 @@ export const jobBoardAbi = [
         "type": "string"
       }
     ],
-    "name": "update",
+    "name": "updateDescription",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "jobId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "duration",
+        "type": "uint256"
+      }
+    ],
+    "name": "updateDuration",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -374,6 +405,19 @@ export const jobBoardAbi = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getCancelled",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -399,6 +443,25 @@ export const jobBoardAbi = [
         "name": "token",
         "type": "address"
       },
+      {
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      }
+    ],
+    "name": "getCancelledAt",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "index",
@@ -474,6 +537,19 @@ export const jobBoardAbi = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getFilled",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -499,6 +575,25 @@ export const jobBoardAbi = [
         "name": "token",
         "type": "address"
       },
+      {
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      }
+    ],
+    "name": "getFilledAt",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "index",
@@ -790,6 +885,19 @@ export const jobBoardAbi = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getNumCancelled",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -797,6 +905,19 @@ export const jobBoardAbi = [
         "type": "address"
       }
     ],
+    "name": "getNumFilled",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getNumFilled",
     "outputs": [
       {
@@ -866,6 +987,19 @@ export const jobBoardAbi = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getNumOpen",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -917,6 +1051,19 @@ export const jobBoardAbi = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getOpen",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -930,6 +1077,25 @@ export const jobBoardAbi = [
         "internalType": "uint256[]",
         "name": "",
         "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      }
+    ],
+    "name": "getOpenAt",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",

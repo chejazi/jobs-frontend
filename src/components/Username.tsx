@@ -29,7 +29,7 @@ function Username({ address, link, both }: { address: string, link?: boolean, bo
     addressElt = (<Link to={`https://basescan.org/address/${address}`} target="_blank">{addressElt}</Link>)
   }
   if (both) {
-    return <span>{handleElt}<span className="secondary-text">({addressElt})</span></span>
+    return <span>{handleElt}<span className="secondary-text">{addressElt}</span></span>
   }  else {
     return handleElt || addressElt;
   }

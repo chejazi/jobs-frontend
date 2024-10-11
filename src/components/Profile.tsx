@@ -15,6 +15,8 @@ import { StringBigIntMap } from '../types';
 import JobTable from './JobTable';
 import Username from './Username';
 
+const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
+
 function Profile() {
   const account = useAccount();
   const userAddress = account.address;
@@ -23,15 +25,16 @@ function Profile() {
   const [view, setView] = useState("managed");
   const [quantity, setQuantity] = useState('');
   const [staking, setStaking] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [unstaking, setUnstaking] = useState(false);
   const [approving, setApproving] = useState(false);
+  const [registering, setRegistering] = useState(false);
   const [cacheBust, setCacheBust] = useState(1);
   const [draftBio, setDraftBio] = useState("");
   const [claimingSplitter, setClaimingSplitter] = useState("");
   const [claimingSnapshotId, setClaimingSnapshotId] = useState(0n);
   const [claiming, setClaiming] = useState(false);
-  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [viewBioInput, setViewBioInput] = useState(false);
   const [mode, setMode] = useState(0);
   const { address } = useParams();
 
@@ -53,12 +56,13 @@ function Profile() {
       setClaimingSplitter("");
       setClaimingSnapshotId(0n);
       setClaiming(false);
-      setIsEditingBio(false);
-      setSaving(false);
+      setViewBioInput(false);
+      setEditing(false);
       setApproving(false);
       setApproving(false);
       setStaking(false);
       setUnstaking(false);
+      setRegistering(false);
       setTimeout(() => window.alert(writeError), 1);
     } else if (isConfirmed) {
       if (staking || unstaking) {
@@ -67,11 +71,12 @@ function Profile() {
       setClaimingSplitter("");
       setClaimingSnapshotId(0n);
       setClaiming(false);
-      setIsEditingBio(false);
-      setSaving(false);
+      setViewBioInput(false);
+      setEditing(false);
       setApproving(false);
       setStaking(false);
       setUnstaking(false);
+      setRegistering(false);
       setCacheBust(cacheBust + 1);
     }
   }, [writeError, isConfirmed]);
@@ -241,12 +246,22 @@ function Profile() {
   };
 
   const edit = () => {
-    setSaving(true);
+    setEditing(true);
     writeContract({
       abi: registryAbi,
       address: registryAddress,
       functionName: "update",
       args: [draftBio],
+    });
+  };
+
+  const register = () => {
+    setRegistering(true);
+    writeContract({
+      abi: registryAbi,
+      address: registryAddress,
+      functionName: "register",
+      args: [""],
     });
   };
 
@@ -306,11 +321,11 @@ function Profile() {
       >
         <h2 style={{ marginBottom: '0', overflow: 'hidden', textOverflow: 'ellipsis' }}><Username link both address={address} /></h2>
         <div style={{ fontSize: '.75em', fontWeight: 'bold', textTransform: 'uppercase' }}>
-          {prettyPrint(totalStakedUnits, 0)} $JOBS staked
+          {prettyPrint(totalStakedUnits, 0)} $JOBS staked on this user
         </div>
         <div>
           {
-            isEditingBio ? (
+            viewBioInput ? (
               <div>
                 <textarea
                   className='text-input'
@@ -323,11 +338,11 @@ function Profile() {
                   type="button"
                   className="primary-button flex-grow"
                   onClick={edit}
-                  disabled={saving}
+                  disabled={editing}
                 >
-                  {saving ? 'saving' : 'save'}
+                  {editing ? 'saving' : 'save'}
                   {
-                    saving ? (
+                    editing ? (
                       <i className="fa-duotone fa-spinner-third fa-spin" style={{ marginLeft: "1em" }}></i>
                     ) : null
                   }
@@ -336,33 +351,62 @@ function Profile() {
                 <button
                   type="button"
                   className="primary-button flex-grow"
-                  onClick={() => setIsEditingBio(false)}
-                  disabled={saving}
+                  onClick={() => setViewBioInput(false)}
+                  disabled={editing}
                 >
                   cancel
                 </button>
               </div>
             ) : (
               <p>
-                {
-                  bioEmpty ? (
-                    <i>{ isOwnProfile ? 'edit your profile so others know who you are' : 'bio empty' }</i>
-                  ) : bio
-                }
-                {
-                  isOwnProfile ? (
-                    <span
-                      onClick={() => {
-                        setDraftBio(bio);
-                        setIsEditingBio(true);
-                      }}
-                      className="secondary-text"
-                      style={{ cursor: 'pointer', marginLeft: '.5em' }}
-                    >
-                      edit
-                    </span>
-                  ) : null
-                }
+              {
+                splitterAddress == NULL_ADDRESS ? (
+                  <div>
+                    <p>
+                      <i className="far fa-triangle-exclamation" /> This address is not yet registered. The owner must register before others can stake on them.
+                    </p>
+                    {
+                      userAddress == address ? (
+                        <button
+                          type="button"
+                          className="primary-button"
+                          onClick={register}
+                          disabled={registering}
+                        >
+                          {registering ? 'registering' : 'register'}
+                          {
+                            registering ? (
+                              <i className="fa-duotone fa-spinner-third fa-spin" style={{ marginLeft: "1em" }}></i>
+                            ) : null
+                          }
+                        </button>
+                      ) : null
+                    }
+                  </div>
+                ) : (
+                  <div>
+                    {
+                      bioEmpty ? (
+                        <i>{ isOwnProfile ? 'edit your profile so others know who you are' : 'bio empty' }</i>
+                      ) : bio
+                    }
+                    {
+                      isOwnProfile ? (
+                        <span
+                          onClick={() => {
+                            setDraftBio(bio);
+                            setViewBioInput(true);
+                          }}
+                          className="secondary-text"
+                          style={{ cursor: 'pointer', marginLeft: '.5em' }}
+                        >
+                          edit
+                        </span>
+                      ) : null
+                    }
+                  </div>
+                )
+              }
               </p>
             )
           }
@@ -423,7 +467,7 @@ function Profile() {
             {
               isOwnProfile ? (
                 <div className="ui-island full-width-mobile" style={{ padding: '1em', width: '300px', marginRight: '1em', marginBottom: '1em' }}>
-                  <b><h3>My commissions <i className="far fa-lock" /></h3>If you stop staking on someone, commissions from them will no longer appear below.</b>
+                  <div><h3>My commissions <i className="far fa-lock" /></h3>If you stop staking on someone, your commissions from them will no longer appear below.</div>
                   {
                     users.map((u, i) => (
                       <div key={`commission-${u}-${snapshotIds[i]}`} style={{ marginTop: '1em' }} className="flex">
@@ -453,7 +497,7 @@ function Profile() {
               ) : null
             }
             <div className="ui-island flex-grow" style={{ padding: '1em' }}>
-              <h3><Username address={address} /> is staking on</h3>
+              <h3>Stakes by <Username address={address} /></h3>
               <ol>
                 {
                   Object.keys(scoutingMap).sort((a, b) => scoutingMap[a] < scoutingMap[b] ? 1 : -1).map((u) => (
@@ -479,133 +523,163 @@ function Profile() {
         view == "mystake" ? (
           <div className="flex-desktop">
             <div className="ui-island full-width-mobile" style={{ padding: '1em', width: '300px', marginRight: '1em', marginBottom: '1em' }}>
-              <div><h3>Stake on <Username address={address} /></h3><b>Stakers split a 10% commission on any job accepted by <Username address={address} /></b></div>
-              <div className="flex" style={{ maxWidth: '20em', margin: '1em 0', display: 'none' }}>
-                <div
-                  className="flex-grow"
-                  style={{
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                    padding: '.25em 0',
-                    cursor: 'pointer',
-                    borderRadius: '12px',
-                    border: mode == 0 ? '1px solid #999' : '1px solid transparent'
-                  }}
-                  onClick={() => {
-                    setMode(0);
-                    setQuantity("")
-                  }}
-                >
-                  Stake
-                </div>
-                <div
-                  className="flex-grow"
-                  style={{
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                    padding: '.25em 0',
-                    cursor: 'pointer',
-                    borderRadius: '12px',
-                    border: mode == 1 ? '1px solid #999' : '1px solid transparent'
-                  }}
-                  onClick={() => {
-                    setMode(1);
-                    setQuantity("")
-                  }}
-                >
-                  Unstake
-                </div>
-              </div>
-              <div style={{ fontSize: '.75em' }}>
-                <div>{prettyPrint(userStakedUnits, 4)} $JOBS staked by you ({(100 * parseFloat(String(userStakedWei)) / parseFloat(String(totalStakedWei || 1))).toFixed(0)}%)</div>
-                <div>{prettyPrint(userWalletUnits, 4)} $JOBS available to stake</div>
-              </div>
-              <br />
-              <div className="flex" style={{ maxWidth: '20em', marginBottom: '1em' }}>
-                <div className="flex-shrink">&nbsp;</div>
-                <input
-                  className="buy-input"
-                  type="text"
-                  name="quantity"
-                  autoComplete="off"
-                  placeholder="quantity"
-                  style={{ width: "100%" }}
-                  value={quantity}
-                  onChange={(e) => {
-                    setQuantity(e.target.value.replace(/[^0-9.]/g, ''));
-                  }}
-                />
-                <div
-                  className="flex-shrink"
-                  style={{ marginLeft: '1em', minWidth: '4em' }}
-                  onClick={() => isAll ? setQuantity("") : setQuantity(mode == 0 ? userWalletUnits : userStakedUnits)}
-                >
-                  <input
-                    id="all"
-                    type="checkbox"
-                    checked={isAll}
-                  />
-                  <label htmlFor="all">&nbsp;all</label>
-                </div>
-              </div>
+              <h3>Stake on <Username address={address} /></h3>
               {
-                mode == 0 ? (
+                splitterAddress == NULL_ADDRESS ? (
                   <div>
-                    <div>
-                      {
-                        hasAllowance ? (
-                          <button
-                            type="button"
-                            className="primary-button"
-                            onClick={stake}
-                            disabled={pending || !(input > 0 && parseFloat(userWalletUnits) >= input)}
-                          >
-                            {staking ? 'staking' : 'stake'}
-                            {
-                              staking ? (
-                                <i className="fa-duotone fa-spinner-third fa-spin" style={{ marginLeft: "1em" }}></i>
-                              ) : null
-                            }
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="primary-button"
-                            onClick={approve}
-                            disabled={pending || !(input > 0 && parseFloat(userWalletUnits) >= input)}
-                          >
-                            {approving ? 'approving' : 'approve and stake'}
-                            {
-                              approving ? (
-                                <i className="fa-duotone fa-spinner-third fa-spin" style={{ marginLeft: "1em" }}></i>
-                              ) : null
-                            }
-                          </button>
-                        )
-                      }
-                    </div>
+                    <p>
+                      <i className="far fa-triangle-exclamation" /> This address is not yet registered. The owner must register before others can stake on them.
+                    </p>
+                    {
+                      userAddress == address ? (
+                        <button
+                          type="button"
+                          className="primary-button"
+                          onClick={register}
+                          disabled={registering}
+                        >
+                          {registering ? 'registering' : 'register'}
+                          {
+                            registering ? (
+                              <i className="fa-duotone fa-spinner-third fa-spin" style={{ marginLeft: "1em" }}></i>
+                            ) : null
+                          }
+                        </button>
+                      ) : null
+                    }
                   </div>
                 ) : (
                   <div>
-                    <button
-                      type="button"
-                      className="primary-button"
-                      onClick={unstake}
-                      disabled={pending || !(input > 0 && parseFloat(userStakedUnits) >= input)}
-                    >
-                      {unstaking ? 'unstaking' : 'unstake'}
-                      {
-                        unstaking ? (
-                          <i className="fa-duotone fa-spinner-third fa-spin" style={{ marginLeft: "1em" }}></i>
-                        ) : null
-                      }
-                    </button>
+                    <div>Stakers split a 10% commission on any job accepted by <Username address={address} /></div>
+                    <div className="flex" style={{ maxWidth: '20em', margin: '1em 0', display: 'none' }}>
+                      <div
+                        className="flex-grow"
+                        style={{
+                          textAlign: 'center',
+                          fontWeight: 'bold',
+                          padding: '.25em 0',
+                          cursor: 'pointer',
+                          borderRadius: '12px',
+                          border: mode == 0 ? '1px solid #999' : '1px solid transparent'
+                        }}
+                        onClick={() => {
+                          setMode(0);
+                          setQuantity("")
+                        }}
+                      >
+                        Stake
+                      </div>
+                      <div
+                        className="flex-grow"
+                        style={{
+                          textAlign: 'center',
+                          fontWeight: 'bold',
+                          padding: '.25em 0',
+                          cursor: 'pointer',
+                          borderRadius: '12px',
+                          border: mode == 1 ? '1px solid #999' : '1px solid transparent'
+                        }}
+                        onClick={() => {
+                          setMode(1);
+                          setQuantity("")
+                        }}
+                      >
+                        Unstake
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '.75em' }}>
+                      <div>{prettyPrint(userStakedUnits, 4)} $JOBS staked by you ({(100 * parseFloat(String(userStakedWei)) / parseFloat(String(totalStakedWei || 1))).toFixed(0)}%)</div>
+                      <div>{prettyPrint(userWalletUnits, 4)} $JOBS available to stake</div>
+                    </div>
+                    <br />
+                    <div className="flex" style={{ maxWidth: '20em', marginBottom: '1em' }}>
+                      <div className="flex-shrink">&nbsp;</div>
+                      <input
+                        className="buy-input"
+                        type="text"
+                        name="quantity"
+                        autoComplete="off"
+                        placeholder="quantity"
+                        style={{ width: "100%" }}
+                        value={quantity}
+                        onChange={(e) => {
+                          setQuantity(e.target.value.replace(/[^0-9.]/g, ''));
+                        }}
+                      />
+                      <div
+                        className="flex-shrink"
+                        style={{ marginLeft: '1em', minWidth: '4em' }}
+                        onClick={() => isAll ? setQuantity("") : setQuantity(mode == 0 ? userWalletUnits : userStakedUnits)}
+                      >
+                        <input
+                          id="all"
+                          type="checkbox"
+                          checked={isAll}
+                        />
+                        <label htmlFor="all">&nbsp;all</label>
+                      </div>
+                    </div>
+                    {
+                      mode == 0 ? (
+                        <div>
+                          <div>
+                            {
+                              hasAllowance ? (
+                                <button
+                                  type="button"
+                                  className="primary-button"
+                                  onClick={stake}
+                                  disabled={pending || !(input > 0 && parseFloat(userWalletUnits) >= input)}
+                                >
+                                  {staking ? 'staking' : 'stake'}
+                                  {
+                                    staking ? (
+                                      <i className="fa-duotone fa-spinner-third fa-spin" style={{ marginLeft: "1em" }}></i>
+                                    ) : null
+                                  }
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="primary-button"
+                                  onClick={approve}
+                                  disabled={pending || !(input > 0 && parseFloat(userWalletUnits) >= input)}
+                                >
+                                  {approving ? 'approving' : 'approve and stake'}
+                                  {
+                                    approving ? (
+                                      <i className="fa-duotone fa-spinner-third fa-spin" style={{ marginLeft: "1em" }}></i>
+                                    ) : null
+                                  }
+                                </button>
+                              )
+                            }
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <button
+                            type="button"
+                            className="primary-button"
+                            onClick={unstake}
+                            disabled={pending || !(input > 0 && parseFloat(userStakedUnits) >= input)}
+                          >
+                            {unstaking ? 'unstaking' : 'unstake'}
+                            {
+                              unstaking ? (
+                                <i className="fa-duotone fa-spinner-third fa-spin" style={{ marginLeft: "1em" }}></i>
+                              ) : null
+                            }
+                          </button>
+                        </div>
+                      )
+                    }
                   </div>
                 )
               }
             </div>
             <div className="ui-island flex-grow" style={{ padding: '1em' }}>
-              <h3>Stakers</h3>
+              <h3>Top Stakers</h3>
               <ol>
                 {
                   Object.keys(scoutersMap).sort((a, b) => scoutersMap[a] < scoutersMap[b] ? 1 : -1).map((u) => (

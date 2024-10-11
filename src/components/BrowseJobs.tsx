@@ -1,4 +1,4 @@
-// import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useReadContract } from 'wagmi';
 import { jobBoardAddress, jobBoardAbi } from 'constants/abi-job-board-v1';
 import JobTable from './JobTable';
@@ -29,11 +29,11 @@ function BrowseJobs() {
         margin: '0 auto'
       }}
     >
-      {/*<div style={{ textAlign: 'right' }}>
+      <div style={{ textAlign: 'right' }}>
         <Link to="/new">
           <button className="secondary-button">Post a job</button>
         </Link>
-      </div>*/}
+      </div>
       <JobTable jobIds={jobIds} />
     </div>
   );

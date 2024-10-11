@@ -147,12 +147,11 @@ function CreateJob() {
   const pending = posting;
 
   return (
-    <div style={{ maxWidth: '400px', margin: '0 auto' }}>
-      <br />
-      <h2>Description</h2>
+    <div className="ui-island" style={{ maxWidth: '600px', margin: '0 auto', padding: '1em' }}>
+      <h2>Job</h2>
       <input
         className='text-input'
-        placeholder="job title"
+        placeholder="title"
         type="text"
         value={title}
         onChange={e => setTitle(e.target.value)}
@@ -161,11 +160,12 @@ function CreateJob() {
       <br />
       <textarea
         className='text-input'
-        placeholder="job description"
+        placeholder="description"
         style={{ resize: "vertical", minHeight: '5em' }}
         value={description}
         onChange={e => setDescription(e.target.value)}
       />
+      <br />
       <br />
       <h2>Compensation</h2>
       <TokenDropdown token={token} setToken={setToken} />
@@ -218,18 +218,20 @@ function CreateJob() {
         </div>
       </div>
       <br />
+      <h2>The Fine Print ™️</h2>
+      <div>All jobs must be funded at the time of creation. For the job to start, you must offer the job to a candidate and they must accept. You may cancel a job before it has started and receive a full refund. If a job has started, you can end the job early and claim a refund of the prorated time remaining, less the 10% commission paid to stakers on the candidate.</div>
+      <br />
       <br />
       <div className="flex">
         {
           hasAllowance ? (
             <button
               type="button"
-              className="buy-button flex-grow"
+              className="primary-button flex-grow"
               onClick={post}
               disabled={pending || !(input > 0 && parseFloat(userWalletUnits) >= input)}
             >
               {posting ? 'posting' : 'post'}
-              {symbol == 'WETH' ? ' WETH' : ''}
               {
                 posting ? (
                   <i className="fa-duotone fa-spinner-third fa-spin" style={{ marginLeft: "1em" }}></i>
@@ -239,7 +241,7 @@ function CreateJob() {
           ) : (
             <button
               type="button"
-              className="buy-button flex-grow"
+              className="primary-button flex-grow"
               onClick={approve}
               disabled={pending || !(input > 0 && parseFloat(userWalletUnits) >= input)}
             >

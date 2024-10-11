@@ -210,7 +210,7 @@ function JobListing() {
     setOffering(true);
     const hash = ethers.solidityPackedKeccak256(
       ["uint256", "address", "string"],   // The types of the inputs
-      [jobId, candidate, "test"]  // The corresponding values
+      [jobId, candidate, "password"]  // The corresponding values
     );
     console.log(hash);
     writeContract({
@@ -243,13 +243,13 @@ function JobListing() {
 
   const accept = () => {
     setAccepting(true);
-    const password = window.prompt("Enter the password to accept this job")
+    const password = "password"; //window.prompt("Enter the password to accept this job")
     const hash = ethers.solidityPackedKeccak256(
       ["uint256", "address", "string"],   // The types of the inputs
       [jobId, userAddress, password]  // The corresponding values
     );
     if (hash != offerHash) {
-      window.alert("Invalid password");
+      window.alert("Offer not applicable");
       return;
     }
     writeContract({
@@ -534,7 +534,7 @@ function JobListing() {
                       }
                     </p>
                     <p>
-                      If you were offered this job, click Accept and enter the password provided to you below to start the job.
+                      If you were offered this job, click Accept to start the job.
                     </p>
                     <p>
                       <button

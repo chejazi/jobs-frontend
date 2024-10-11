@@ -45,6 +45,7 @@ function People() {
       }}
     >
       <h2 style={{ marginBottom: '0' }}>Top candidates</h2>
+      <p>As people stake more $JOBS on a user, they rise in the ranks.</p>
       <ol>
         {
           usersCopy.sort((a, b) => userStake[a] > userStake[b] ? -1 : 1).map(u => (
@@ -52,7 +53,7 @@ function People() {
               <div style={{ marginBottom: '.25em' }}>
                 <Link to={`/profile/${u}`}><Username address={u} /></Link>
                 <div style={{ fontSize: '.75em' }}>
-                  Scouted with {prettyPrint(formatUnits(userStake[u] || 0n, 18), 0)} $JOBS
+                  {prettyPrint(formatUnits(userStake[u] || 0n, 18), 0)} $JOBS
                 </div>
               </div>
             </li>
