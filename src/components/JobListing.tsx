@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useCapabilities, useWriteContracts, useCallsStatus } from "wagmi/experimental";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { formatUnits } from 'viem';
 import { ethers } from 'ethers';
@@ -33,14 +34,50 @@ function JobListing() {
   const [claiming, setClaiming] = useState(false);
   const [cacheBust, setCacheBust] = useState(1);
 
-  const { writeContract, error: writeError, data: writeData } = useWriteContract();
+  const { writeContract, error: writeContractError, data: writeContractData } = useWriteContract();
+  const { writeContracts, error: writeContractsError, data: writeContractsData } = useWriteContracts();
+  const { data: availableCapabilities } = useCapabilities({
+    account: account.address,
+  });
+  const capabilities = useMemo(() => {
+    if (!availableCapabilities || !account.chainId) return {};
+    const capabilitiesForChain = availableCapabilities[account.chainId];
+    if (
+      capabilitiesForChain["paymasterService"] &&
+      capabilitiesForChain["paymasterService"].supported
+    ) {
+      return {
+        paymasterService: {
+          url: 'https://api.developer.coinbase.com/rpc/v1/base/McRfKBFkYsCReIW4otXCyFqarpE6ClAU',
+        },
+      };
+    }
+    return {};
+  }, [availableCapabilities, account.chainId]);
 
-  const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash: writeData,
+  const write = (args: any) => {
+    if (capabilities.paymasterService) {
+      writeContracts({ contracts: [args], capabilities });
+    } else {
+      writeContract(args);
+    }
+  };
+
+  const { data: callsStatus } = useCallsStatus({
+    id: writeContractsData as string,
+    query: {
+      refetchInterval: (data) =>
+        data.state.data?.status === "CONFIRMED" ? false : 1000,
+    },
   });
 
+  const { isSuccess } = useWaitForTransactionReceipt({
+    hash: writeContractData,
+  });
+  const isConfirmed = isSuccess || (callsStatus && callsStatus.status === "CONFIRMED");
+
   useEffect(() => {
-    if (writeError) {
+    if (writeContractError || writeContractsError) {
       setEditing(false);
       setApplying(false);
       setOffering(false);
@@ -49,7 +86,7 @@ function JobListing() {
       setAccepting(false);
       setEnding(false);
       setClaiming(false);
-      setTimeout(() => window.alert(writeError), 1);
+      setTimeout(() => window.alert(writeContractError || writeContractsError), 1);
     } else if (isConfirmed) {
       if (isEditingDescription) {
         setIsEditingDescription(false);
@@ -64,8 +101,7 @@ function JobListing() {
       setClaiming(false);
       setCacheBust(cacheBust + 1);
     }
-  }, [writeError, isConfirmed]);
-
+  }, [writeContractError, writeContractsError, isConfirmed]);
 
   const { data: listingRes } = useReadContract({
     abi: readApiAbi,
@@ -168,7 +204,7 @@ function JobListing() {
 
   const apply = () => {
     setApplying(true);
-    writeContract({
+    write({
       abi: jobBoardAbi,
       address: jobBoardAddress,
       functionName: "apply_",
@@ -178,7 +214,7 @@ function JobListing() {
 
   const cancel = () => {
     setCancelling(true);
-    writeContract({
+    write({
       abi: jobBoardAbi,
       address: jobBoardAddress,
       functionName: "cancel",
@@ -188,7 +224,7 @@ function JobListing() {
 
   const rescind = () => {
     setRescinding(true);
-    writeContract({
+    write({
       abi: jobBoardAbi,
       address: jobBoardAddress,
       functionName: "offer",
@@ -198,10 +234,10 @@ function JobListing() {
 
   const edit = () => {
     setEditing(true);
-    writeContract({
+    write({
       abi: jobBoardAbi,
       address: jobBoardAddress,
-      functionName: "update",
+      functionName: "updateDescription",
       args: [jobId, description],
     });
   };
@@ -213,7 +249,7 @@ function JobListing() {
       [jobId, candidate, "password"]  // The corresponding values
     );
     console.log(hash);
-    writeContract({
+    write({
       abi: jobBoardAbi,
       address: jobBoardAddress,
       functionName: "offer",
@@ -223,7 +259,7 @@ function JobListing() {
 
   const end = () => {
     setEnding(true);
-    writeContract({
+    write({
       abi: jobBoardAbi,
       address: jobBoardAddress,
       functionName: "end",
@@ -233,7 +269,7 @@ function JobListing() {
 
   const claim = () => {
     setClaiming(true);
-    writeContract({
+    write({
       abi: jobBoardAbi,
       address: jobBoardAddress,
       functionName: "claim",
@@ -252,7 +288,7 @@ function JobListing() {
       window.alert("Offer not applicable");
       return;
     }
-    writeContract({
+    write({
       abi: jobBoardAbi,
       address: jobBoardAddress,
       functionName: "accept",
@@ -334,8 +370,8 @@ function JobListing() {
                     </div>
                   </div>
                 ) : (
-                  <p style={{ fontStyle: 'italic' }}>
-                    &ldquo;{job.description}&rdquo;
+                  <p style={{ fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
+                    {job.description}
                     <span
                       onClick={() => {
                         setDescription(job.description);
@@ -351,8 +387,8 @@ function JobListing() {
               }
             </div>
           ) : (
-            <p style={{ fontStyle: 'italic' }}>
-              &ldquo;{job.description}&rdquo;
+            <p style={{ fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
+              {job.description}
             </p>
           )
         }
@@ -372,7 +408,7 @@ function JobListing() {
         }
       </div>
       {
-        isActive ? (
+        isActive || isEnded ? (
           <div>
             <br />
             <div
@@ -584,7 +620,7 @@ function JobListing() {
                 disabled={applying || applied}
                 style={{ margin: '0' }}
               >
-                {applying ? 'Applying' : (applied ? 'Applied ✔' : 'Apply')}
+                {applying ? 'Applying' : (applied ? 'Applied' : 'Apply')}
                 {
                   applying ? (
                     <i className="fa-duotone fa-spinner-third fa-spin" style={{ marginLeft: "1em" }}></i>
@@ -595,7 +631,7 @@ function JobListing() {
           ) : null
         }
         {applications.map(a => (
-          <div className="flex" style={{ alignItems: 'start', marginBottom: '.5em' }}>
+          <div key={`applicant-${a.applicant}`} className="flex" style={{ alignItems: 'start', marginBottom: '.5em' }}>
             {
               isManager && isOpen && !hasOffer ? (
                 <div className="flex-shrink" style={{ marginRight: '.5em', marginTop: '.25em' }}>

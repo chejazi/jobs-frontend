@@ -7,6 +7,7 @@ export const config = createConfig(
     chains: [base],
     walletConnectProjectId: 'e820108402253110e87b7fb26a516e00',
     appName: "Based Jobs",
+    coinbaseWalletPreference: "all", //   options: 'all' | 'smartWalletOnly' | 'eoaOnly'
     transports: {
       [base.id]: http(),
       // [mainnet.id]: http(),

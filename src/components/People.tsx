@@ -48,7 +48,7 @@ function People() {
       <p>As people stake more $JOBS on a user, they rise in the ranks.</p>
       <ol>
         {
-          usersCopy.sort((a, b) => userStake[a] > userStake[b] ? -1 : 1).map(u => (
+          usersCopy.sort((a, b) => userStake[a] > userStake[b] ? -1 : 1).slice(0, 20).map(u => (
             <li key={`u-${u}`}>
               <div style={{ marginBottom: '.25em' }}>
                 <Link to={`/profile/${u}`}><Username address={u} /></Link>

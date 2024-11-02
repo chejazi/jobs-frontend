@@ -17,7 +17,16 @@ function Username({ address, link, both }: { address: string, link?: boolean, bo
   let handleElt = null;
   if (fcHandle) {
     handleElt = (
-      <span>{fcHandle}<img src="/fc.svg" style={{ height: '1em', marginLeft: '.25em', marginBottom: '-.1em' }} /></span>
+      <span>
+        {fcHandle}
+        <span onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          window.open(`https://warpcast.com/${fcHandle}`);
+        }}>
+          <img src="/fc.svg" style={{ height: '1em', marginLeft: '.25em', marginBottom: '-.1em', cursor: 'pointer' }} />
+        </span>
+      </span>
     );
   }
   let addressElt = <span>{prettyPrintAddress(address)}</span>;

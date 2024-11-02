@@ -6,7 +6,7 @@ import { evm2Listing, evmEmptyListingArray, getTokenImage } from 'utils/data';
 import { prettyPrint, getDuration } from 'utils/formatting';
 import { Listing, RawListingArray } from '../types';
 
-function BrowseJobs({ jobIds }: { jobIds: number[] }) {
+function BrowseJobs({ jobIds, showOnlyActive }: { jobIds: number[]; showOnlyActive?: boolean }) {
   const { data: jobsRes } = useReadContract({
     abi: readApiAbi,
     address: readApiAddress,
@@ -48,6 +48,9 @@ function BrowseJobs({ jobIds }: { jobIds: number[] }) {
         {
           jobIds.map((jobId, i) => {
             const job = jobs[i];
+            if (job.status != 1 && showOnlyActive) {
+              return null;
+            }
             return (
               <div key={`job-m-${jobId}`} style={{ borderTop: '1px solid #ccc', margin: '1em 0' }}>
                 <br />
@@ -89,7 +92,18 @@ function BrowseJobs({ jobIds }: { jobIds: number[] }) {
                         </button>
                       </Link>
                     </div>
-                  ) : null
+                  ) :  (
+                    <div className="flex-shrink">
+                      <Link
+                        to={`/${jobId}`}
+                        style={{ textDecoration: 'none' }}
+                      >
+                        <button type="button" className="primary-button job-status-3" style={{ marginLeft: '0' }}>
+                          Closed
+                        </button>
+                      </Link>
+                    </div>
+                  )
                 }
               </div>
             );
@@ -110,6 +124,9 @@ function BrowseJobs({ jobIds }: { jobIds: number[] }) {
               {
                 jobIds.map((jobId, i) => {
                   const job = jobs[i];
+                  if (job.status != 1 && showOnlyActive) {
+                    return null;
+                  }
                   return (
                     <tr key={`job-${jobId}`}>
                       <td>
@@ -142,9 +159,12 @@ function BrowseJobs({ jobIds }: { jobIds: number[] }) {
                         <div>{getDuration(job.duration)}</div>
                       </td>
                       <td>
-                        {job.description}
+                        <div style={{ maxHeight: '6em', overflow: 'hidden' }}>
+                          {job.description}
+                        </div>
                       </td>
                       <td>
+
                         {
                           job.status == 1 ? (
                             <div className="flex-shrink">
@@ -157,7 +177,18 @@ function BrowseJobs({ jobIds }: { jobIds: number[] }) {
                                 </button>
                               </Link>
                             </div>
-                          ) : null
+                          ) : (
+                            <div className="flex-shrink">
+                              <Link
+                                to={`/${jobId}`}
+                                style={{ textDecoration: 'none' }}
+                              >
+                                <button type="button" className="primary-button job-status-3" style={{ marginLeft: '.5em' }}>
+                                  Closed
+                                </button>
+                              </Link>
+                            </div>
+                          )
                         }
                       </td>
                     </tr>

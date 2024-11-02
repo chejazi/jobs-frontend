@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useReadContract } from 'wagmi';
 import { jobBoardAddress, jobBoardAbi } from 'constants/abi-job-board-v1';
 import JobTable from './JobTable';
 
 function BrowseJobs() {
+  const [showOnlyActive, setShowOnlyActive] = useState(true);
 
   const { data: counterRes } = useReadContract({
     abi: jobBoardAbi,
@@ -16,7 +18,9 @@ function BrowseJobs() {
 
   const jobIds = [];
   for (let i = counter; i > 0; i--) {
-    jobIds.push(i);
+    if (i != 20) {
+      jobIds.push(i);
+    }
   }
 
   return (
@@ -29,12 +33,19 @@ function BrowseJobs() {
         margin: '0 auto'
       }}
     >
-      <div style={{ textAlign: 'right' }}>
-        <Link to="/new">
-          <button className="secondary-button">Post a job</button>
-        </Link>
+      <div className="flex" style={{ alignItems: 'center' }}>
+        <div className="flex-grow">
+          <input type="checkbox" id="show-open" checked={showOnlyActive} onChange={(e) => setShowOnlyActive(e.target.checked)} />
+          &nbsp;&nbsp;
+          <label htmlFor="show-open">Show only open jobs</label>
+        </div>
+        <div className="flex-shrink">
+          <Link to="/new">
+            <button className="secondary-button">Post a job</button>
+          </Link>
+        </div>
       </div>
-      <JobTable jobIds={jobIds} />
+      <JobTable jobIds={jobIds} showOnlyActive={showOnlyActive} />
     </div>
   );
 }
