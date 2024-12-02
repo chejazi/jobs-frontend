@@ -5,8 +5,8 @@ import { ConnectKitButton } from 'connectkit';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { Address, formatUnits, parseUnits } from 'viem';
 
-import { prettyPrint } from 'utils/formatting';
-import { jobBoardAddress, jobBoardAbi } from 'constants/abi-job-board-v1';
+import { prettyPrint, prettyPrintAddress } from 'utils/formatting';
+import { jobBoardAddress, jobBoardAbi } from 'constants/abi-job-board-v2';
 import { registryAddress, registryAbi } from 'constants/abi-registry';
 import { rebaseAddress, rebaseAbi } from 'constants/abi-rebase-v1';
 import { readApiAddress, readApiAbi } from 'constants/abi-read-api';
@@ -15,6 +15,10 @@ import { erc20Abi } from 'constants/abi-erc20';
 import { StringBigIntMap } from '../types';
 import JobTable from './JobTable';
 import Username from './Username';
+import UserBio from './UserBio';
+import UserScore from './UserScore';
+import UserShelf from './UserShelf';
+//style={{ fontSize: '.75em', fontWeight: 'bold', textTransform: 'uppercase' }}
 
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
@@ -323,7 +327,6 @@ function Profile() {
   const isAll = mode == 0 ? quantity == userWalletUnits : quantity == userStakedUnits;
 
   const isOwnProfile = address == userAddress;
-  const bioEmpty = bio.length == 0;
 
   if (!address || address == "undefined") {
     return (
@@ -356,10 +359,7 @@ function Profile() {
           position: 'relative',
         }}
       >
-        <h2 style={{ marginBottom: '0', overflow: 'hidden', textOverflow: 'ellipsis' }}><Username link both address={address} /></h2>
-        <div style={{ fontSize: '.75em', fontWeight: 'bold', textTransform: 'uppercase' }}>
-          {prettyPrint(totalStakedUnits, 0)} $JOBS staked on this user
-        </div>
+        <h2 style={{ marginBottom: '0', overflow: 'hidden', textOverflow: 'ellipsis' }}><UserShelf address={address} /></h2>
         <div>
           {
             viewBioInput ? (
@@ -422,11 +422,7 @@ function Profile() {
                   </div>
                 ) : (
                   <div>
-                    {
-                      bioEmpty ? (
-                        <i>{ isOwnProfile ? 'edit your profile so others know who you are' : 'bio empty' }</i>
-                      ) : bio
-                    }
+                    <UserBio bio={bio} address={address} />
                     {
                       isOwnProfile ? (
                         <span
@@ -447,6 +443,18 @@ function Profile() {
               </p>
             )
           }
+        </div>
+        <div>
+          <div
+            className='profile-tag secondary-bg'
+            onClick={() => window.open(`https://basescan.org/address/${address}`, '_blank')}
+          >
+            {prettyPrintAddress(address)}
+          </div>
+          <div className='profile-tag secondary-bg' onClick={() => setView("mystake")}>
+            Stakers: {prettyPrint(totalStakedUnits, 0)} $JOBS
+          </div>
+          <UserScore address={address} />
         </div>
       </div>
       <div style={{ textAlign: 'center' }}>

@@ -6,7 +6,7 @@ import { prettyPrint } from 'utils/formatting';
 import { registryAddress, registryAbi } from 'constants/abi-registry';
 import { readApiAddress, readApiAbi } from 'constants/abi-read-api';
 import { StringBigIntMap } from '../types';
-import Username from './Username';
+import UserShelf from './UserShelf';
 
 function People() {
   // const account = useAccount();
@@ -46,20 +46,19 @@ function People() {
     >
       <h2 style={{ marginBottom: '0' }}>Top candidates</h2>
       <p>As people stake more $JOBS on a user, they rise in the ranks.</p>
-      <ol>
-        {
-          usersCopy.sort((a, b) => userStake[a] > userStake[b] ? -1 : 1).slice(0, 20).map(u => (
-            <li key={`u-${u}`}>
-              <div style={{ marginBottom: '.25em' }}>
-                <Link to={`/profile/${u}`}><Username address={u} /></Link>
-                <div style={{ fontSize: '.75em' }}>
-                  {prettyPrint(formatUnits(userStake[u] || 0n, 18), 0)} $JOBS
-                </div>
-              </div>
-            </li>
-          ))
-        }
-      </ol>
+      {
+        usersCopy.sort((a, b) => userStake[a] > userStake[b] ? -1 : 1).map(u => (
+            <div style={{ marginBottom: '1em' }}>
+              <Link to={`/profile/${u}`} style={{ textDecoration: 'none' }}>
+                <UserShelf address={u}>
+                  <div style={{ fontSize: '.75em' }}>
+                    {prettyPrint(formatUnits(userStake[u] || 0n, 18), 0)} $JOBS
+                  </div>
+                </UserShelf>
+              </Link>
+            </div>
+        ))
+      }
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useAccount, useReadContract, useWriteContract, useWaitForTransactionRec
 import { formatUnits, parseUnits, Address } from 'viem';
 
 import { erc20Abi } from 'constants/abi-erc20';
-import { jobBoardAddress, jobBoardAbi } from 'constants/abi-job-board-v1';
+import { jobBoardAddress, jobBoardAbi } from 'constants/abi-job-board-v2';
 import TokenDropdown from './TokenDropdown';
 
 function CreateJob() {

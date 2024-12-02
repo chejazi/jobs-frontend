@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useReadContract } from 'wagmi';
-import { jobBoardAddress, jobBoardAbi } from 'constants/abi-job-board-v1';
+import { jobBoardAddress, jobBoardAbi } from 'constants/abi-job-board-v2';
 import JobTable from './JobTable';
 
 function BrowseJobs() {
@@ -18,9 +18,9 @@ function BrowseJobs() {
 
   const jobIds = [];
   for (let i = counter; i > 0; i--) {
-    if (i != 20) {
+    // if (i != 20) {
       jobIds.push(i);
-    }
+    // }
   }
 
   return (

@@ -90,6 +90,25 @@ export type RawListingArray = [string[],string[],Address[],Address[],bigint[],nu
 
 export type RawListing = [string,string,Address,Address,bigint,number,number,number];
 
+export interface PassportSocial {
+  source: string;
+  profile_name: string;
+  profile_bio: string;
+  profile_image_url: string;
+  profile_url: string;
+  follower_count: number;
+  following_count: number;
+  passport_id: number;
+}
+
+export interface PassportUserResponse {
+  passport: {
+    score: number;
+    passport_id: number;
+    passport_socials: PassportSocial[];
+  }
+}
+
 export interface NeynarUser {
   username: string;
   follower_count: number;
@@ -105,6 +124,10 @@ export interface NeynarUserResponse {
 export interface FCUser {
   username: string;
   numFollowers: number;
+  pfpUrl: string;
+  fallbackBio: string;
+  builderScore: number;
+  passportId: number;
 }
 
 export interface StringFCUserMap {

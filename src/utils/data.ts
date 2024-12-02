@@ -1,6 +1,14 @@
 import axios from 'axios';
 import { getAddress, Address } from 'viem'
-import { StringMap, NumberMap, StringNumberMap, Listing, RawListingArray, RawListing, NeynarUserResponse } from '../types';
+import {
+  StringMap,
+  NumberMap,
+  StringNumberMap,
+  Listing,
+  RawListingArray,
+  RawListing,
+  PassportUserResponse,
+} from '../types';
 
 const cache = {
   tokenPrices: {} as StringNumberMap,
@@ -162,13 +170,18 @@ export function generateCryptoRandomString(length: number) {
 }
 
 export async function address2FC(dispatch: any, addresses: string[]) {
+  const address = addresses[0];
   const response = await axios.get(
-    'https://u3cey55qwrm3ndc7ymvsajjwzq0wfvrx.lambda-url.us-east-1.on.aws/?addresses=' + addresses.join(',')
+    'https://4dclrhwmykkwtfebciminde34y0oyibh.lambda-url.us-east-1.on.aws/?address=' + address
+    // 'https://u3cey55qwrm3ndc7ymvsajjwzq0wfvrx.lambda-url.us-east-1.on.aws/?addresses=' + addresses.join(',')
   );
   if (response && response.data && !response.data.code) {
     dispatch({
       type: 'RESOLVE_FC_HANDLE',
-      payload: response.data as NeynarUserResponse
+      meta: {
+        address
+      },
+      payload: response.data as PassportUserResponse
     });
   }
 }

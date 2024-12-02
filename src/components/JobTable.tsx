@@ -25,6 +25,8 @@ function BrowseJobs({ jobIds, showOnlyActive }: { jobIds: number[]; showOnlyActi
     jobsResCast[7][i],
   ]));
 
+  console.log(jobs);
+
   // Token Metadata
   const { data: tokenMetadataRes } = useReadContract({
     abi: readApiAbi,

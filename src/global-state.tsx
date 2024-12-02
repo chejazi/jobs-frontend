@@ -1,6 +1,6 @@
 import { createContext, useReducer, useContext, ReactNode, Dispatch } from 'react';
 import { getAddress } from 'viem';
-import { StringFCUserMap, NeynarUser } from './types';
+import { StringFCUserMap, PassportSocial } from './types';
 
 
 interface GlobalState {
@@ -9,6 +9,9 @@ interface GlobalState {
 
 interface Action {
   type: string;
+  meta: {
+    address: string;
+  };
   payload: any;
 }
 
@@ -24,22 +27,23 @@ function globalReducer(state: GlobalState, action: Action) {
   switch (action.type) {
     case 'RESOLVE_FC_HANDLE':
       const users = {...state.addressToFCUser};
-      Object.keys(action.payload).forEach(address => {
-        action.payload[address].forEach((user: NeynarUser) => {
-          const casedAddr = getAddress(address);
+      const { passport } = action.payload;
+      if (passport) {
+        const user = passport.passport_socials.filter((s: PassportSocial) => s.source == 'farcaster')?.[0];
+        if (user) {
+          const casedAddr = getAddress(action.meta.address);
           if (!users[casedAddr]) {
             users[casedAddr] = {
-              username: user.username,
+              username: user.profile_name,
+              fallbackBio: user.profile_bio,
+              pfpUrl: user.profile_image_url,
               numFollowers: user.follower_count,
-            };
-          } else if (users[casedAddr].numFollowers < user.follower_count) {
-            users[casedAddr] = {
-              username: user.username,
-              numFollowers: user.follower_count,
+              builderScore: passport.score,
+              passportId: passport.passport_id,
             };
           }
-        });
-      });
+        }
+      }
       return { ...state, addressToFCUser: users };
     default:
       return state;

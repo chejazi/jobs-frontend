@@ -2,15 +2,16 @@ import { useEffect, useState, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useCapabilities, useWriteContracts, useCallsStatus } from "wagmi/experimental";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { formatUnits } from 'viem';
+import { formatUnits, Address } from 'viem';
 import { ethers } from 'ethers';
-import { jobBoardAddress, jobBoardAbi } from 'constants/abi-job-board-v1';
+import { jobBoardAddress, jobBoardAbi } from 'constants/abi-job-board-v2';
 import { readApiAddress, readApiAbi } from 'constants/abi-read-api';
 import { erc20Abi } from 'constants/abi-erc20';
 import { evm2Listing, evmEmptyListing } from 'utils/data';
 import { prettyPrint, getTimeAgo, getDuration } from 'utils/formatting';
 import { RawListing, StringBigIntMap } from '../types';
 import Username from './Username';
+import UserShelf from './UserShelf';
 import RewardsProgressBar from './RewardsProgressBar';
 const EMPTY_OFFER = '0x0000000000000000000000000000000000000000000000000000000000000000';
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -112,9 +113,18 @@ function JobListing() {
   });
   const job = evm2Listing(listingRes as RawListing || evmEmptyListing());
 
-  const { data: startTimeRes } = useReadContract({
+  const { data: boardRes } = useReadContract({
     abi: jobBoardAbi,
     address: jobBoardAddress,
+    functionName: "getBoard",
+    args: [jobId],
+    scopeKey: `job-listing-${cacheBust}`
+  });
+  const boardAddress = (boardRes || jobBoardAddress) as Address;
+
+  const { data: startTimeRes } = useReadContract({
+    abi: jobBoardAbi,
+    address: boardAddress,
     functionName: "getStartTime",
     args: [jobId],
     scopeKey: `job-listing-${cacheBust}`
@@ -123,7 +133,7 @@ function JobListing() {
 
   const { data: workerRes } = useReadContract({
     abi: jobBoardAbi,
-    address: jobBoardAddress,
+    address: boardAddress,
     functionName: "getWorker",
     args: [jobId],
     scopeKey: `job-listing-${cacheBust}`
@@ -132,7 +142,7 @@ function JobListing() {
 
   const { data: offerHashRes } = useReadContract({
     abi: jobBoardAbi,
-    address: jobBoardAddress,
+    address: boardAddress,
     functionName: "getPendingOffer",
     args: [jobId],
     scopeKey: `job-listing-${cacheBust}`
@@ -141,7 +151,7 @@ function JobListing() {
 
   const { data: timeMoneyRes } = useReadContract({
     abi: jobBoardAbi,
-    address: jobBoardAddress,
+    address: boardAddress,
     functionName: "getTimeAndMoneyOwed",
     args: [jobId],
     scopeKey: `job-listing-${cacheBust}`
@@ -151,7 +161,7 @@ function JobListing() {
 
   const { data: appliedRes } = useReadContract({
     abi: jobBoardAbi,
-    address: jobBoardAddress,
+    address: boardAddress,
     functionName: "hasApplied",
     args: [userAddress, jobId],
     scopeKey: `job-listing-${cacheBust}`
@@ -160,7 +170,7 @@ function JobListing() {
 
   const { data: applicantTimesRes } = useReadContract({
     abi: jobBoardAbi,
-    address: jobBoardAddress,
+    address: boardAddress,
     functionName: "getApplicantTimes",
     args: [jobId],
     scopeKey: `job-listing-${cacheBust}`
@@ -656,10 +666,13 @@ function JobListing() {
               ) : null
             }
             <div className="flex-grow">
-              <Link to={`/profile/${a.applicant}`}><Username address={a.applicant} /></Link>
-              <div style={{ fontSize: '.75em', marginTop: '0em' }}>
-                {getTimeAgo(a.time)} · {prettyPrint(formatUnits(userStake[a.applicant] || 0n, 18), 0)} $JOBS
-              </div>
+              <Link to={`/profile/${a.applicant}`} style={{ textDecoration: 'none' }}>
+                <UserShelf address={a.applicant}>
+                  <div style={{ fontSize: '.75em' }}>
+                    {getTimeAgo(a.time)} · {prettyPrint(formatUnits(userStake[a.applicant] || 0n, 18), 0)} $JOBS
+                  </div>
+                </UserShelf>
+              </Link>
             </div>
           </div>
         ))}
