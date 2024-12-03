@@ -4,7 +4,7 @@ import { formatUnits, Address } from 'viem';
 import { readApiAddress, readApiAbi } from 'constants/abi-read-api';
 import { evm2Listing, evmEmptyListingArray, getTokenImage } from 'utils/data';
 import { prettyPrint, getDuration } from 'utils/formatting';
-import { Listing, RawListingArray } from '../types';
+import { Listing, RawListingArray, TokenMetadataMap } from '../types';
 
 function BrowseJobs({ jobIds, showOnlyActive }: { jobIds: number[]; showOnlyActive?: boolean }) {
   const { data: jobsRes } = useReadContract({
@@ -25,20 +25,50 @@ function BrowseJobs({ jobIds, showOnlyActive }: { jobIds: number[]; showOnlyActi
     jobsResCast[7][i],
   ]));
 
-  console.log(jobs);
+  const tokenMap: TokenMetadataMap = {};
+  jobs.map(j => tokenMap[j.token as string] = {
+    name: '',
+    symbol: '',
+    decimals: 18,
+    supply: 1n,
+    image: null,
+  });
+
+  const tokens = Object.keys(tokenMap);
 
   // Token Metadata
   const { data: tokenMetadataRes } = useReadContract({
     abi: readApiAbi,
     address: readApiAddress as Address,
     functionName: "getTokenMetadata",
-    args: [jobs.map(j => j.token)],
+    args: [tokens],
   });
-  const tokenMetadata = (tokenMetadataRes || [[], [], [], []]) as [string[], string[], bigint[], bigint[]];
-  const names = tokenMetadata[0];
-  const symbols = tokenMetadata[1];
-  const decimals = tokenMetadata[2].map(n => Number(n));
-  const supplies = tokenMetadata[3];
+  const tokenMetadata = (tokenMetadataRes || [[], [], [], [], []]) as [string[], string[], bigint[], bigint[], string[]];
+  tokens.forEach((t, i) => {
+    tokenMap[t] = {
+      name: tokenMetadata[0][i],
+      symbol: tokenMetadata[1][i],
+      decimals: Number(tokenMetadata[2][i]),
+      supply: tokenMetadata[3][i],
+      image: tokenMetadata[4][i],
+    };
+  });
+  console.log(tokenMap);
+
+  const names = [] as string[];
+  const symbols = [] as string[];
+  const decimals = [] as number[];
+  const supplies = [] as bigint[];
+  const images = [] as (string|null)[];
+
+  jobs.forEach(j => {
+    const t = tokenMap[j.token];
+    names.push(t.name);
+    symbols.push(t.symbol);
+    decimals.push(t.decimals);
+    supplies.push(t.supply);
+    images.push(t.image);
+  })
 
   if (jobs.length == 0) {
     return null;
@@ -53,6 +83,7 @@ function BrowseJobs({ jobIds, showOnlyActive }: { jobIds: number[]; showOnlyActi
             if (job.status != 1 && showOnlyActive) {
               return null;
             }
+            const image = images[i] || getTokenImage(job.token);
             return (
               <div key={`job-m-${jobId}`} style={{ borderTop: '1px solid #ccc', margin: '1em 0' }}>
                 <br />
@@ -62,8 +93,8 @@ function BrowseJobs({ jobIds, showOnlyActive }: { jobIds: number[]; showOnlyActi
                   style={{ height: '100%', alignItems: 'center', textDecoration: 'none' }}
                 >
                   {
-                    getTokenImage(job.token) ? (
-                      <img style={{ height: '3em', borderRadius: '500px', marginRight: '.5em' }} src={getTokenImage(job.token)} />
+                    image ? (
+                      <img style={{ height: '3em', borderRadius: '500px', marginRight: '.5em' }} src={image} />
                     ) : null
                   }
                   <b>{names[i]}</b>
@@ -74,7 +105,7 @@ function BrowseJobs({ jobIds, showOnlyActive }: { jobIds: number[]; showOnlyActi
                       style={{ textDecoration: 'none' }}
                       to={`/${jobId}`}
                     >
-                      {job.title.replace(/\s/g, String.fromCharCode(160))}
+                      {job.title}
                     </Link>
                   </b>
                   <div>
@@ -129,6 +160,7 @@ function BrowseJobs({ jobIds, showOnlyActive }: { jobIds: number[]; showOnlyActi
                   if (job.status != 1 && showOnlyActive) {
                     return null;
                   }
+                  const image = images[i] || getTokenImage(job.token);
                   return (
                     <tr key={`job-${jobId}`}>
                       <td>
@@ -139,20 +171,20 @@ function BrowseJobs({ jobIds, showOnlyActive }: { jobIds: number[]; showOnlyActi
                           style={{ height: '100%', alignItems: 'center', textDecoration: 'none' }}
                         >
                           {
-                            getTokenImage(job.token) ? (
-                              <img style={{ height: '3em', borderRadius: '500px', marginRight: '.5em' }} src={getTokenImage(job.token)} />
+                            image ? (
+                              <img style={{ height: '3em', borderRadius: '500px', marginRight: '.5em' }} src={image} />
                             ) : null
                           }
                           <b>{names[i]}</b>
                         </Link>
                       </td>
-                      <td>
+                      <td style={{ maxWidth: '250px' }}>
                         <b>
                           <Link
                             style={{ textDecoration: 'none' }}
                             to={`/${jobId}`}
                           >
-                            {job.title.replace(/\s/g, String.fromCharCode(160))}
+                            {job.title}
                           </Link>
                         </b>
                         <div>
@@ -160,8 +192,8 @@ function BrowseJobs({ jobIds, showOnlyActive }: { jobIds: number[]; showOnlyActi
                         </div>
                         <div>{getDuration(job.duration)}</div>
                       </td>
-                      <td>
-                        <div style={{ maxHeight: '6em', overflow: 'hidden' }}>
+                      <td style={{ width: '100%' }}>
+                        <div style={{ maxHeight: '6em', width: '100%', overflow: 'hidden' }}>
                           {job.description}
                         </div>
                       </td>

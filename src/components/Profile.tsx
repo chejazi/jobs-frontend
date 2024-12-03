@@ -207,11 +207,12 @@ function Profile() {
     functionName: "getTokenMetadata",
     args: [tokens],
   });
-  const tokenMetadata = (tokenMetadataRes || [[], [], [], []]) as [string[], string[], bigint[], bigint[]];
+  const tokenMetadata = (tokenMetadataRes || [[], [], [], [], []]) as [string[], string[], bigint[], bigint[], string[]];
   // const names = tokenMetadata[0];
   const symbols = tokenMetadata[1];
   const decimals = tokenMetadata[2].map(n => Number(n));
   // const supplies = tokenMetadata[3];
+  // const images = tokenMetadata[4];
 
   // Tokens staked by all users
   const { data: appStakeRes } = useReadContract({

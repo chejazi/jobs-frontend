@@ -3,7 +3,6 @@ import { Link, useParams } from 'react-router-dom';
 import { useCapabilities, useWriteContracts, useCallsStatus } from "wagmi/experimental";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { formatUnits, Address } from 'viem';
-import { ethers } from 'ethers';
 import { jobBoardAddress, jobBoardAbi } from 'constants/abi-job-board-v2';
 import { readApiAddress, readApiAbi } from 'constants/abi-read-api';
 import { erc20Abi } from 'constants/abi-erc20';
@@ -140,14 +139,14 @@ function JobListing() {
   });
   const worker = (workerRes || NULL_ADDRESS) as string;
 
-  const { data: offerHashRes } = useReadContract({
+  const { data: pendingWorkerRes } = useReadContract({
     abi: jobBoardAbi,
     address: boardAddress,
-    functionName: "getPendingOffer",
+    functionName: "getPendingWorker",
     args: [jobId],
     scopeKey: `job-listing-${cacheBust}`
   });
-  const offerHash = (offerHashRes || EMPTY_OFFER) as string;
+  const pendingWorker = (pendingWorkerRes || NULL_ADDRESS) as string;
 
   const { data: timeMoneyRes } = useReadContract({
     abi: jobBoardAbi,
@@ -254,16 +253,11 @@ function JobListing() {
 
   const offer = (candidate: string) => {
     setOffering(true);
-    const hash = ethers.solidityPackedKeccak256(
-      ["uint256", "address", "string"],   // The types of the inputs
-      [jobId, candidate, "password"]  // The corresponding values
-    );
-    console.log(hash);
     write({
       abi: jobBoardAbi,
       address: jobBoardAddress,
       functionName: "offer",
-      args: [jobId, hash],
+      args: [jobId, candidate],
     });
   };
 
@@ -289,26 +283,17 @@ function JobListing() {
 
   const accept = () => {
     setAccepting(true);
-    const password = "password"; //window.prompt("Enter the password to accept this job")
-    const hash = ethers.solidityPackedKeccak256(
-      ["uint256", "address", "string"],   // The types of the inputs
-      [jobId, userAddress, password]  // The corresponding values
-    );
-    if (hash != offerHash) {
-      window.alert("Offer not applicable");
-      return;
-    }
     write({
       abi: jobBoardAbi,
       address: jobBoardAddress,
       functionName: "accept",
-      args: [jobId, password],
+      args: [jobId],
     });
   };
 
   const isManager = job.manager == userAddress;
   const isWorker = worker == userAddress;
-  const hasOffer = offerHash != EMPTY_OFFER;
+  const hasOffer = pendingWorker != NULL_ADDRESS;
   const isOpen = job.status == 1;
   const isActive = job.status == 2;
   const isEnded = job.status == 3;
@@ -563,7 +548,7 @@ function JobListing() {
                 isOpen && hasOffer ? (
                   <div>
                     <p>
-                      An offer has been extended.
+                      An offer has been extended to <Username address={pendingWorker} />.
                       {
                         isManager ? (
                           <span
@@ -579,25 +564,31 @@ function JobListing() {
                         ) : null
                       }
                     </p>
-                    <p>
-                      If you were offered this job, click Accept to start the job.
-                    </p>
-                    <p>
-                      <button
-                        type="button"
-                        className="primary-button"
-                        onClick={accept}
-                        disabled={accepting}
-                        style={{ margin: '0' }}
-                      >
-                        {accepting ? 'Accepting' : 'Accept'}
-                        {
-                          accepting ? (
-                            <i className="fa-duotone fa-spinner-third fa-spin" style={{ marginLeft: "1em" }}></i>
-                          ) : null
-                        }
-                      </button>
-                    </p>
+                    {
+                      pendingWorker == userAddress ? (
+                        <div>
+                          <p>
+                            Click accept to start the job. Your compensation will stream over the duration and be claimable from this page.
+                          </p>
+                          <p>
+                            <button
+                              type="button"
+                              className="primary-button"
+                              onClick={accept}
+                              disabled={accepting}
+                              style={{ margin: '0' }}
+                            >
+                              {accepting ? 'Accepting' : 'Accept'}
+                              {
+                                accepting ? (
+                                  <i className="fa-duotone fa-spinner-third fa-spin" style={{ marginLeft: "1em" }}></i>
+                                ) : null
+                              }
+                            </button>
+                          </p>
+                        </div>
+                      ) : null
+                    }
                   </div>
                 ) : null
               }

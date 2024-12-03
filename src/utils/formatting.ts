@@ -16,22 +16,30 @@ export const getTimeAgo = (date: Date) => {
   }
 };
 
+const SECONDS_MINUTE = 60;
+const SECONDS_HOUR = 3600;
+const SECONDS_DAY = 86400;
+
 export const getDuration = (duration: number) => {
   let value = 0;
   let unit = '';
-  if (duration < 3600) {
+  if (duration < SECONDS_HOUR) {
     unit = 'minute';
-    value = Math.floor(duration / 60) || 1; // min 1 minute
-  } else if (duration < 86400) {
+    value = Math.floor(duration / SECONDS_MINUTE) || 1; // min 1 minute
+  } else if (duration < SECONDS_DAY) {
     unit = 'hour';
-    value = Math.floor(duration / 3600);
-  } else if (duration < (2 * 604800)) {
+    value = Math.floor(duration / SECONDS_HOUR);
+  } else if (duration < (SECONDS_DAY * 7)) {
     unit = 'day';
-    value = Math.floor(duration / 86400);
-  } else {
+    value = Math.floor(duration / SECONDS_DAY);
+  } else if (duration < (365 * SECONDS_DAY)) {
     unit = 'week';
-    value = Math.floor(duration / 604800);
+    value = Math.floor(duration / (7 * SECONDS_DAY));
+  } else {
+    unit = 'year';
+    value = Math.floor(duration / (365 * SECONDS_DAY));
   }
+  // return `${duration}`;
   return `${value}${String.fromCharCode(160)}${unit}${value > 1 ? 's' : ''}`;
 };
 

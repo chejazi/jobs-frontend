@@ -75,6 +75,18 @@ export interface TokenMap {
   [key: string]: Token;
 }
 
+export interface TokenMetadata {
+  name: string;
+  symbol: string;
+  decimals: number;
+  supply: bigint;
+  image: string | null;
+}
+
+export interface TokenMetadataMap {
+  [key: string]: TokenMetadata;
+}
+
 export interface Listing {
   title: string;
   description: string;

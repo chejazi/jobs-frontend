@@ -1,4 +1,4 @@
-export const readApiAddress = '0x9795aE5b774748D386089f49D75161492119B7CA';
+export const readApiAddress = '0xA16295A35210781066a9E5387Aa7F9d12607c55E';
 export const readApiAbi = [
   {
     "inputs": [
@@ -251,8 +251,13 @@ export const readApiAbi = [
       },
       {
         "internalType": "uint256[]",
-        "name": "supply",
+        "name": "",
         "type": "uint256[]"
+      },
+      {
+        "internalType": "string[]",
+        "name": "",
+        "type": "string[]"
       }
     ],
     "stateMutability": "view",
