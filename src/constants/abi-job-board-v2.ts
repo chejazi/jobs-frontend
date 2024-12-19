@@ -1,4 +1,4 @@
-export const jobBoardAddress = '0x2D2BB82ab894267C5Ba80D26e9B4f7470315Bdd8';
+export const jobBoardAddress = '0x78a57863A1Bed20F82de28b5ac5CCc5F6B1b6699';
 export const jobBoardAbi = [
   {
     "inputs": [],

@@ -53,7 +53,6 @@ function BrowseJobs({ jobIds, showOnlyActive }: { jobIds: number[]; showOnlyActi
       image: tokenMetadata[4][i],
     };
   });
-  console.log(tokenMap);
 
   const names = [] as string[];
   const symbols = [] as string[];
@@ -88,13 +87,13 @@ function BrowseJobs({ jobIds, showOnlyActive }: { jobIds: number[]; showOnlyActi
               <div key={`job-m-${jobId}`} style={{ borderTop: '1px solid #ccc', margin: '1em 0' }}>
                 <br />
                 <Link
-                  to={`/${jobId}`}
+                  to={`/project/${job.token}`}
                   className="flex"
                   style={{ height: '100%', alignItems: 'center', textDecoration: 'none' }}
                 >
                   {
                     image ? (
-                      <img style={{ height: '3em', borderRadius: '500px', marginRight: '.5em' }} src={image} />
+                      <img style={{ height: '3em', width: '3em', objectFit: 'cover', borderRadius: '500px', marginRight: '.5em' }} src={image} />
                     ) : null
                   }
                   <b>{names[i]}</b>
@@ -165,14 +164,13 @@ function BrowseJobs({ jobIds, showOnlyActive }: { jobIds: number[]; showOnlyActi
                     <tr key={`job-${jobId}`}>
                       <td>
                         <Link
-                          // to={`/project/${job.token}`}
-                          to={`/${jobId}`}
+                          to={`/project/${job.token}`}
                           className="flex"
                           style={{ height: '100%', alignItems: 'center', textDecoration: 'none' }}
                         >
                           {
                             image ? (
-                              <img style={{ height: '3em', borderRadius: '500px', marginRight: '.5em' }} src={image} />
+                              <img style={{ height: '3em', width: '3em', objectFit: 'cover', borderRadius: '500px', marginRight: '.5em' }} src={image} />
                             ) : null
                           }
                           <b>{names[i]}</b>

@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useCapabilities, useWriteContracts, useCallsStatus } from "wagmi/experimental";
+// import { useCapabilities, useWriteContracts, useCallsStatus } from "wagmi/experimental";
 import { ConnectKitButton } from 'connectkit';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { Address, formatUnits, parseUnits } from 'viem';
@@ -46,46 +46,48 @@ function Profile() {
   const jobsToken = '0xd21111c0e32df451eb61a23478b438e3d71064cb';
 
   const { writeContract, error: writeContractError, data: writeContractData } = useWriteContract();
-  const { writeContracts, error: writeContractsError, data: writeContractsData } = useWriteContracts();
-  const { data: availableCapabilities } = useCapabilities({
-    account: account.address,
-  });
-  const capabilities = useMemo(() => {
-    if (!availableCapabilities || !account.chainId) return {};
-    const capabilitiesForChain = availableCapabilities[account.chainId];
-    if (
-      capabilitiesForChain["paymasterService"] &&
-      capabilitiesForChain["paymasterService"].supported
-    ) {
-      return {
-        paymasterService: {
-          url: 'https://api.developer.coinbase.com/rpc/v1/base/McRfKBFkYsCReIW4otXCyFqarpE6ClAU',
-        },
-      };
-    }
-    return {};
-  }, [availableCapabilities, account.chainId]);
+  // const { writeContracts, error: writeContractsError, data: writeContractsData } = useWriteContracts();
+  // const { data: availableCapabilities } = useCapabilities({
+  //   account: account.address,
+  // });
+  // const capabilities = useMemo(() => {
+  //   if (!availableCapabilities || !account.chainId) return {};
+  //   const capabilitiesForChain = availableCapabilities[account.chainId];
+  //   if (
+  //     capabilitiesForChain["paymasterService"] &&
+  //     capabilitiesForChain["paymasterService"].supported
+  //   ) {
+  //     return {
+  //       paymasterService: {
+  //         url: 'https://api.developer.coinbase.com/rpc/v1/base/McRfKBFkYsCReIW4otXCyFqarpE6ClAU',
+  //       },
+  //     };
+  //   }
+  //   return {};
+  // }, [availableCapabilities, account.chainId]);
 
-  const { data: callsStatus } = useCallsStatus({
-    id: writeContractsData as string,
-    query: {
-      refetchInterval: (data) =>
-        data.state.data?.status === "CONFIRMED" ? false : 1000,
-    },
-  });
+  // const { data: callsStatus } = useCallsStatus({
+  //   id: writeContractsData as string,
+  //   query: {
+  //     refetchInterval: (data) =>
+  //       data.state.data?.status === "CONFIRMED" ? false : 1000,
+  //   },
+  // });
 
   const { isSuccess } = useWaitForTransactionReceipt({
     hash: writeContractData as Address,
   });
-  const isConfirmed = isSuccess || (callsStatus && callsStatus.status === "CONFIRMED");
+  const isConfirmed = isSuccess; // || (callsStatus && callsStatus.status === "CONFIRMED");
 
-  const write = (args: any) => {
-    if (capabilities.paymasterService) {
-      writeContracts({ contracts: [args], capabilities });
-    } else {
-      writeContract(args);
-    }
-  };
+  // const write = (args: any) => {
+  //   if (capabilities.paymasterService) {
+  //     writeContracts({ contracts: [args], capabilities });
+  //   } else {
+  //     writeContract(args);
+  //   }
+  // };
+  const write = (args: any) => writeContract(args);
+
 
   useEffect(() => {
     setMode(0);
@@ -93,7 +95,7 @@ function Profile() {
   }, [address]);
 
   useEffect(() => {
-    if (writeContractError || writeContractsError) {
+    if (writeContractError) {
       setClaimingSplitter("");
       setClaimingSnapshotId(0n);
       setClaiming(false);
@@ -104,7 +106,7 @@ function Profile() {
       setStaking(false);
       setUnstaking(false);
       setRegistering(false);
-      setTimeout(() => window.alert(writeContractError || writeContractsError), 1);
+      setTimeout(() => window.alert(writeContractError), 1);
     } else if (isConfirmed) {
       if (staking || unstaking) {
         setQuantity('');
@@ -120,7 +122,7 @@ function Profile() {
       setRegistering(false);
       setCacheBust(cacheBust + 1);
     }
-  }, [writeContractError || writeContractsError, isConfirmed]);
+  }, [writeContractError, isConfirmed]);
 
   useEffect(() => {
     if (userAddress && address == 'undefined') {

@@ -67,12 +67,11 @@ function App() {
         </div>
         <br />
         <Routes>
-          <Route path="/project/:address" element={<About />} />
           <Route path="/profile/:address" element={<Profile />} />
           <Route path="/new" element={<CreateJob />} />
           <Route path="/people" element={<People />} />
           <Route path="/about" element={<About />} />
-          {/*<Route path="/me" element={<Profile />} />*/}
+          <Route path="/project/:address" element={<BrowseJobs />} />
           <Route path="/:jobId" element={<JobListing />} />
           <Route path="/" element={<BrowseJobs />} />
         </Routes>

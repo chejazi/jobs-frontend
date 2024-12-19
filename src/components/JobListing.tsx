@@ -1,10 +1,12 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { useCapabilities, useWriteContracts, useCallsStatus } from "wagmi/experimental";
+// import { useCapabilities, useWriteContracts, useCallsStatus } from "wagmi/experimental";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { formatUnits, Address } from 'viem';
+import { formatUnits, Address, parseUnits } from 'viem';
 import { jobBoardAddress, jobBoardAbi } from 'constants/abi-job-board-v2';
 import { readApiAddress, readApiAbi } from 'constants/abi-read-api';
+import { tokenAbi } from 'constants/abi-token';
+import { funderAbi } from 'constants/abi-funder';
 import { erc20Abi } from 'constants/abi-erc20';
 import { evm2Listing, evmEmptyListing } from 'utils/data';
 import { prettyPrint, getTimeAgo, getDuration } from 'utils/formatting';
@@ -32,52 +34,57 @@ function JobListing() {
   const [accepting, setAccepting] = useState(false);
   const [ending, setEnding] = useState(false);
   const [claiming, setClaiming] = useState(false);
+  const [funding, setFunding] = useState(false);
+  const [quantity, setQuantity] = useState('');
   const [cacheBust, setCacheBust] = useState(1);
 
   const { writeContract, error: writeContractError, data: writeContractData } = useWriteContract();
-  const { writeContracts, error: writeContractsError, data: writeContractsData } = useWriteContracts();
-  const { data: availableCapabilities } = useCapabilities({
-    account: account.address,
-  });
-  const capabilities = useMemo(() => {
-    if (!availableCapabilities || !account.chainId) return {};
-    const capabilitiesForChain = availableCapabilities[account.chainId];
-    if (
-      capabilitiesForChain["paymasterService"] &&
-      capabilitiesForChain["paymasterService"].supported
-    ) {
-      return {
-        paymasterService: {
-          url: 'https://api.developer.coinbase.com/rpc/v1/base/McRfKBFkYsCReIW4otXCyFqarpE6ClAU',
-        },
-      };
-    }
-    return {};
-  }, [availableCapabilities, account.chainId]);
 
-  const write = (args: any) => {
-    if (capabilities.paymasterService) {
-      writeContracts({ contracts: [args], capabilities });
-    } else {
-      writeContract(args);
-    }
-  };
+  // CB-SW-REENABLE
+  // const { writeContracts, error: writeContractsError, data: writeContractsData } = useWriteContracts();
+  // const { data: availableCapabilities } = useCapabilities({
+  //   account: account.address,
+  // });
+  // const capabilities = useMemo(() => {
+  //   if (!availableCapabilities || !account.chainId) return {};
+  //   const capabilitiesForChain = availableCapabilities[account.chainId];
+  //   if (
+  //     capabilitiesForChain["paymasterService"] &&
+  //     capabilitiesForChain["paymasterService"].supported
+  //   ) {
+  //     return {
+  //       paymasterService: {
+  //         url: 'https://api.developer.coinbase.com/rpc/v1/base/McRfKBFkYsCReIW4otXCyFqarpE6ClAU',
+  //       },
+  //     };
+  //   }
+  //   return {};
+  // }, [availableCapabilities, account.chainId]);
+  // const write = (args: any) => {
+  //   if (capabilities.paymasterService) {
+  //     writeContracts({ contracts: [args], capabilities });
+  //   } else {
+  //     writeContract(args);
+  //   }
+  // };
+  const write = (args: any) => writeContract(args);
 
-  const { data: callsStatus } = useCallsStatus({
-    id: writeContractsData as string,
-    query: {
-      refetchInterval: (data) =>
-        data.state.data?.status === "CONFIRMED" ? false : 1000,
-    },
-  });
+  // CB-SW-REENABLE
+  // const { data: callsStatus } = useCallsStatus({
+  //   id: writeContractsData as string,
+  //   query: {
+  //     refetchInterval: (data) =>
+  //       data.state.data?.status === "CONFIRMED" ? false : 1000,
+  //   },
+  // });
 
   const { isSuccess } = useWaitForTransactionReceipt({
     hash: writeContractData,
   });
-  const isConfirmed = isSuccess || (callsStatus && callsStatus.status === "CONFIRMED");
+  const isConfirmed = isSuccess; // || (callsStatus && callsStatus.status === "CONFIRMED"); // CB-SW-REENABLE
 
   useEffect(() => {
-    if (writeContractError || writeContractsError) {
+    if (writeContractError) {
       setEditing(false);
       setApplying(false);
       setOffering(false);
@@ -86,7 +93,8 @@ function JobListing() {
       setAccepting(false);
       setEnding(false);
       setClaiming(false);
-      setTimeout(() => window.alert(writeContractError || writeContractsError), 1);
+      setFunding(false);
+      setTimeout(() => window.alert(writeContractError), 1);
     } else if (isConfirmed) {
       if (isEditingDescription) {
         setIsEditingDescription(false);
@@ -99,9 +107,11 @@ function JobListing() {
       setAccepting(false);
       setEnding(false);
       setClaiming(false);
+      setFunding(false);
+      setQuantity('');
       setCacheBust(cacheBust + 1);
     }
-  }, [writeContractError, writeContractsError, isConfirmed]);
+  }, [writeContractError, isConfirmed]);
 
   const { data: listingRes } = useReadContract({
     abi: readApiAbi,
@@ -180,6 +190,24 @@ function JobListing() {
     time: new Date(Number(applicantTimes[1][i]) * 1000),
   }));
 
+  const { data: funderRes } = useReadContract({
+    abi: tokenAbi,
+    address: job.token,
+    functionName: "getFunder",
+    args: [],
+    scopeKey: `job-listing-${cacheBust}`
+  });
+  const treasury = (funderRes || NULL_ADDRESS) as string;
+
+  const { data: ownerRes } = useReadContract({
+    abi: tokenAbi,
+    address: job.token,
+    functionName: "owner",
+    args: [],
+    scopeKey: `job-listing-${cacheBust}`
+  });
+  const owner = (ownerRes || NULL_ADDRESS) as string;
+
   const { data: stakedRes } = useReadContract({
     abi: readApiAbi,
     address: readApiAddress,
@@ -210,6 +238,8 @@ function JobListing() {
     args: [],
   });
   const symbol = (symbolRes || '') as string;
+
+  const wei = parseUnits((quantity || '0').toString(), decimals);
 
   const apply = () => {
     setApplying(true);
@@ -288,6 +318,16 @@ function JobListing() {
       address: jobBoardAddress,
       functionName: "accept",
       args: [jobId],
+    });
+  };
+
+  const fund = () => {
+    setFunding(true);
+    write({
+      abi: funderAbi,
+      address: treasury as Address,
+      functionName: "fund",
+      args: [jobBoardAddress, jobId, wei],
     });
   };
 
@@ -402,6 +442,60 @@ function JobListing() {
           ) : null
         }
       </div>
+      {
+        userAddress == owner && isOpen ? (
+          <div>
+            <br />
+            <div
+              className="ui-island"
+              style={{ padding: '1em' }}
+            >
+              <h3>Fund this job <i className="far fa-lock" /></h3>
+              <p>Funding will come from the ${symbol} treasury. If the job is cancelled, the amount will be refunded back.</p>
+              <div>
+                <div className="flex" style={{ alignItems: 'center' }}>
+                  <input
+                    className="flex-grow text-input"
+                    type="text"
+                    name="quantity"
+                    autoComplete="off"
+                    placeholder={`${symbol || 'tokens'} to pay`}
+                    style={{ width: "100%" }}
+                    value={quantity}
+                    onChange={(e) => {
+                      setQuantity(e.target.value.replace(/[^0-9.]/g, ''));
+                    }}
+                  />
+                  {
+                    symbol ? (
+                      <div className="flex-shrink" style={{ marginLeft: '1em' }}>
+                        ${symbol}
+                      </div>
+                    ) : null
+                  }
+                </div>
+                <br />
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={fund}
+                  disabled={funding}
+                  style={{ margin: '0' }}
+                >
+                  {funding ? 'Funding' : 'Fund'}
+                  {
+                    funding ? (
+                      <i className="fa-duotone fa-spinner-third fa-spin" style={{ marginLeft: "1em" }}></i>
+                    ) : null
+                  }
+                </button>
+                <br />
+                <br />
+              </div>
+            </div>
+          </div>
+        ) : null
+      }
       {
         isActive || isEnded ? (
           <div>

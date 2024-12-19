@@ -1,27 +1,30 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useReadContract } from 'wagmi';
+import { Address } from 'viem';
 import { jobBoardAddress, jobBoardAbi } from 'constants/abi-job-board-v2';
+import { erc20Abi } from 'constants/abi-erc20';
 import JobTable from './JobTable';
 
 function BrowseJobs() {
-  const [showOnlyActive, setShowOnlyActive] = useState(true);
+  const { address } = useParams();
 
-  const { data: counterRes } = useReadContract({
+  const { data: jobIdRes } = useReadContract({
     abi: jobBoardAbi,
     address: jobBoardAddress,
-    functionName: "counter",
+    functionName: "getOpen",
+    args: address ? [address] : [],
+    // scopeKey: `stakemanager-${cacheBust}`
+  });
+  const jobIds = (jobIdRes as bigint[] || []).map(id => Number(id)).sort((a, b) => a < b ? 1 : -1);
+
+  const { data: tokenSymbolRes } = useReadContract({
+    abi: erc20Abi,
+    address: address as Address,
+    functionName: "symbol",
     args: [],
     // scopeKey: `stakemanager-${cacheBust}`
   });
-  const counter = Number(counterRes as bigint || 0n);
-
-  const jobIds = [];
-  for (let i = counter; i > 0; i--) {
-    // if (i != 20) {
-      jobIds.push(i);
-    // }
-  }
+  const tokenSymbol = (tokenSymbolRes || null) as string|null;
 
   return (
     <div
@@ -34,10 +37,10 @@ function BrowseJobs() {
       }}
     >
       <div className="flex" style={{ alignItems: 'center' }}>
-        <div className="flex-grow">
-          <input type="checkbox" id="show-open" checked={showOnlyActive} onChange={(e) => setShowOnlyActive(e.target.checked)} />
-          &nbsp;&nbsp;
-          <label htmlFor="show-open">Show only open jobs</label>
+        <div className="flex-grow" style={{ fontWeight: 'bold' }}>
+          {
+            tokenSymbol ? `Browsing $${tokenSymbol} jobs` : 'Browsing all open jobs'
+          }
         </div>
         <div className="flex-shrink">
           <Link to="/new">
@@ -45,7 +48,7 @@ function BrowseJobs() {
           </Link>
         </div>
       </div>
-      <JobTable jobIds={jobIds} showOnlyActive={showOnlyActive} />
+      <JobTable jobIds={jobIds} showOnlyActive={true} />
     </div>
   );
 }
